@@ -5,6 +5,17 @@
 CatNipy es una aplicación de escritorio que muestra una mascota virtual (un gato) que hasta ahora reacciona al sonido del micrófono. La aplicación utiliza PyQt5 para la interfaz gráfica y sounddevice para la captura de audio en tiempo real.
 
 ---
+<br>
+
+## Documentación técnica
+
+### Inspiración
+https://medium.com/analytics-vidhya/create-your-own-desktop-pet-with-python-5b369be18868
+
+### Sounddevice
+https://python-sounddevice.readthedocs.io/en/0.5.1/installation.html
+
+<br>
 
 ## Instalación y Ejecución
 
@@ -24,6 +35,7 @@ python brain.py
 - **Audio**: Detección automática
 
 ---
+<br>
 
 ## Configuración Avanzada
 
@@ -42,6 +54,9 @@ self.setGeometry(x, y, 20, 20)  # Modificar x, y
 self.overlay_label.move(x_offset, y_offset)
 ```
 ---
+<br>
+
+
 
 ## Arquitectura del Sistema
 
@@ -63,9 +78,11 @@ self.overlay_label = QLabel(self)   # Superposición para animaciones
 self.stream = sd.InputStream(...)   # Stream de captura de audio
 ```
 
----
+<br>
 
-## 🔧 Componentes Técnicos Detallados
+
+
+## Componentes Técnicos Detallados
 
 ### **Configuración de Ventana**
 
@@ -83,6 +100,7 @@ self.stream = sd.InputStream(...)   # Stream de captura de audio
 - **Nota**: El tamaño se reajusta automáticamente con `resize()`
 
 ---
+<br>
 
 ### **Sistema de Imágenes en Capas**
 
@@ -111,6 +129,8 @@ self.overlay_label.hide()  # Ocultar capa superior
 - Más eficiente que cargar/descargar imágenes
 
 ---
+<br>
+
 
 ### **Sistema de Detección de Audio**
 
@@ -146,6 +166,7 @@ volumen_umbral = 0.001  # Sensibilidad ajustable
 - Permite calibrar según micrófono/ambiente
 
 ---
+<br>
 
 ### **Sistema de Eventos del Mouse**
 
@@ -175,8 +196,10 @@ self.dragging = False  # Flag de estado
 - **Thread-safe**: Acceso controlado al estado de arrastre
 
 ---
+<br>
 
-## 📊 Flujo de Datos
+
+## Flujo de Datos
 
 ### **Flujo de Audio**
 ```
@@ -192,8 +215,10 @@ Update GUI State → Repaint Window
 ```
 
 ---
+<br>
 
-## 🔄 Gestión de Recursos
+
+## Gestión de Recursos
 
 ### **Audio Stream**
 ```python
@@ -211,8 +236,9 @@ def closeEvent(self, event):
 - **Audio Buffer**: Gestionado internamente por sounddevice
 
 ---
+<br>
 
-## ⚡ Consideraciones de Rendimiento
+## Consideraciones de Rendimiento
 
 ### **Audio Processing**
 - **Frecuencia**: ~43 callbacks por segundo (1024/44100)
@@ -224,8 +250,9 @@ def closeEvent(self, event):
 - **Operación**: Show/Hide (no redibujado completo)
 - **GPU**: Aceleración hardware para transparencias
 
+<br>
 
-## 📁 Estructura de Archivos
+## Estructura de Archivos
 
 ```
 catnipy/
