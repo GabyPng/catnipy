@@ -1,6 +1,6 @@
 # CatNipy | Mascota Virtual
 
-## Descripción Técnica
+## Descripción detallada
 
 CatNipy es una aplicación de escritorio que muestra una mascota virtual (un gato) que hasta ahora reacciona al sonido del micrófono. La aplicación utiliza PyQt5 para la interfaz gráfica y sounddevice para la captura de audio en tiempo real.
 
