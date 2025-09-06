@@ -13,7 +13,7 @@ samplerate = 44100  # Frecuencia de muestreo (Hz)
 chunk_size = 1024   # Tamaño del bloque de datos
 
 # Umbral de volumen para detectar sonido
-volumen_umbral = 0.001  # Ajusta este valor según tu micrófono y entorno
+volumen_umbral = 0.1  # Ajusta este valor según tu micrófono y entorno
 
 class CatNipy(QWidget):
     def __init__(self):
@@ -22,7 +22,7 @@ class CatNipy(QWidget):
         self.drag_position = None
         self.init_ui()
         self.init_audio()
-        
+
     def init_ui(self):
         self.setWindowTitle("CatNipy")
         self.setGeometry(1620, 750, 20, 20)
