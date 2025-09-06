@@ -9,7 +9,7 @@ Trabajo en conjunto con [Madnux](https://github.com/mad2ux)
 
 ## Descripción detallada
 
-CatNipy es una aplicación de escritorio que muestra una mascota virtual (un gato) que hasta ahora reacciona al sonido del micrófono. La aplicación utiliza PyQt5 para la interfaz gráfica y sounddevice para la captura de audio en tiempo real.
+CatNipy es una aplicación de escritorio que muestra una mascota virtual (un gato) que reacciona al sonido del micrófono, movimientos del teclado y del mouse. La aplicación utiliza PyQt5 para la interfaz gráfica, sounddevice para la captura de audio en tiempo real y pynput para capturar eventos globales del sistema.
 
 ---
 <br>
@@ -22,13 +22,16 @@ https://medium.com/analytics-vidhya/create-your-own-desktop-pet-with-python-5b36
 ### Sounddevice
 https://python-sounddevice.readthedocs.io/en/0.5.1/installation.html
 
+### Pynput
+https://pynput.readthedocs.io/en/latest/
+
 <br>
 
 ## Instalación y Ejecución
 
 ### **Dependencias**
 ```bash
-pip install sounddevice numpy PyQt5
+pip install sounddevice numpy PyQt5 pynput
 ```
 
 ### **Ejecución**
@@ -39,6 +42,8 @@ python brain.py
 ### **Controles**
 - **Clic + Arrastrar**: Mover mascota
 - **Doble clic**: Cerrar aplicación
+- **Teclas**: Activa animación de teclado
+- **Mouse**: Activa animación de mouse
 - **Audio**: Detección automática
 
 ---
@@ -60,10 +65,16 @@ self.setGeometry(x, y, 20, 20)  # Modificar x, y
 ```python
 self.overlay_label.move(x_offset, y_offset)
 ```
+
+### **Ajustar Sensibilidad de Movimiento del Mouse**
+```python
+# Limitar la frecuencia de actualización para movimientos del mouse
+if current_time - self.last_mouse_move_time > 0.1:  # Modificar este valor (segundos)
+    # Cuanto mayor sea el valor, menos sensible será a los movimientos del mouse
+```
+
 ---
 <br>
-
-
 
 ## Arquitectura del Sistema
 
@@ -71,13 +82,15 @@ self.overlay_label.move(x_offset, y_offset)
 
 #### 1. **Clase Principal: `CatNipy(QWidget)`**
 - **Herencia**: Extiende `QWidget` de PyQt5
-- Gestiona la interfaz gráfica y coordinar todos los componentes
+- Gestiona la interfaz gráfica y coordina todos los componentes
 - Compositor (combina UI, audio y eventos)
 
-#### 2. **Sistema de Interfaz Gráfica**
+#### 2. **Sistema de Interfaz Gráfica por Capas**
 ```python
-self.label = QLabel(self)           # Imagen base del gato
-self.overlay_label = QLabel(self)   # Superposición para animaciones
+self.base_label = QLabel(self)          # Imagen base del gato
+self.keyboard_label = QLabel(self)      # Capa para animaciones de teclado
+self.mouse_label = QLabel(self)         # Capa para animaciones de mouse
+self.overlay_label = QLabel(self)       # Capa para animaciones de boca (cuanto está hablando)
 ```
 
 #### 3. **Sistema de Audio**
@@ -85,22 +98,72 @@ self.overlay_label = QLabel(self)   # Superposición para animaciones
 self.stream = sd.InputStream(...)   # Stream de captura de audio
 ```
 
+#### 4. **Sistema de Eventos Globales**
+```python
+# Monitoreo de teclado global
+self.keyboard_listener = keyboard.Listener(...)
+
+# Monitoreo de mouse global
+self.mouse_listener = mouse.Listener(...)
+```
+
+#### 5. **Sistema de Comunicación Entre Hilos**
+```python
+# Clase para manejar señales entre hilos
+class GlobalEventSignals(QObject):
+    keyPressSignal = pyqtSignal()
+    keyReleaseSignal = pyqtSignal()
+    # ... otras señales
+```
+
 <br>
 
-
-
-## Componentes Técnicos Detallados
+## Componentes Técnicos
 
 ### **Configuración de Ventana**
 
 #### `setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)`
 - **FramelessWindowHint**: Elimina decoraciones de ventana (barra de título, bordes)
 - **WindowStaysOnTopHint**: Mantiene la ventana siempre visible sobre otras aplicaciones
+
+### **Comunicación Entre Hilos**
+
+PyQt5 requiere que todas las actualizaciones de UI se realicen desde el hilo principal. Para manejar eventos provenientes de hilos secundarios (como los monitores globales de pynput), usamos el sistema de señales y slots de Qt:
+
+```python
+# Emisión de señal desde un hilo secundario
+self.signals.keyPressSignal.emit()
+
+# Conexión en el hilo principal
+self.signals.keyPressSignal.connect(lambda: self.update_keyboard_state("typing_handdown"))
+```
+
+### **Sistema de Monitoreo Global**
+
+El uso de `pynput` permite detectar eventos de teclado y mouse incluso cuando la aplicación no tiene el foco:
+
+```python
+# Inicializar monitor de teclado global
+self.keyboard_listener = keyboard.Listener(
+    on_press=self.on_global_key_press,
+    on_release=self.on_global_key_release)
+```
+
+### **Limitación de Frecuencia de Eventos**
+
+Para evitar sobrecargar la CPU con demasiados eventos, especialmente para el movimiento del mouse:
+
+```python
+# Limitación de la frecuencia de actualización
+current_time = time.time()
+if current_time - self.last_mouse_move_time > 0.1:  # ~10 actualizaciones/segundo
+    self.last_mouse_move_time = current_time
+    # Procesar evento...
+```
 - **Operador |**: Combina múltiples flags usando OR bitwise
 
 #### `setAttribute(Qt.WA_TranslucentBackground)`
 - **Función**: Hace el fondo de la ventana completamente transparente
-- **Resultado**: Solo las imágenes PNG son visibles, el resto es transparente
 
 #### `setGeometry(x, y, width, height)`
 - **Parámetros**: Posición inicial (x,y) y tamaño inicial (width,height)
@@ -273,6 +336,13 @@ catnipy/
 ```
 
 ---
+
+## Exportación
+
+```python
+pip install pyinstaller
+❯ pyinstaller --onefile --noconsole --add-data "assets:assets" brain.py
+```
 
 ## Notas Técnicas
 
