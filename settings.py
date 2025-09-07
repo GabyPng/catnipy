@@ -10,16 +10,54 @@ SETTINGS_BG = "./assets/gui/catnipy_gui__settings.png"
 SETTINGS_EXIT = "./assets/gui/catnipy_gui__settings_exit.png"
 SETTINGS_SELECTOR = "./assets/gui/catnipy_gui__settings_selector.png"
 
+"""
+Constantes técnicas para la interfaz de configuración:
+    - SETTINGS_BG: Imagen de fondo para la ventana de configuración
+    - SETTINGS_EXIT: Botón para guardar y salir de la configuración
+    - SETTINGS_SELECTOR: Control deslizante para ajustar parámetros
+    
+La interfaz utiliza imágenes personalizadas en lugar de widgets estándar 
+para mantener una estética coherente con el personaje principal.
+"""
+
 # Configuración por defecto
 DEFAULT_CONFIG = {
     "volumen_umbral": 0.005,  # Sensibilidad del micrófono
     "mouse_sensibilidad": 0.1  # Sensibilidad del movimiento del mouse
 }
 
+"""
+Parámetros de configuración por defecto:
+    - volumen_umbral: Umbral RMS para detección de audio (0.005)
+      * Valores más bajos aumentan sensibilidad (detecta sonidos más suaves)
+      * Rango efectivo: 0.001 - 0.02
+      
+    - mouse_sensibilidad: Intervalo mínimo entre actualizaciones de mouse (0.1s)
+      * Valores más bajos = animación más fluida pero más uso de CPU
+      * Valores más altos = animación menos reactiva pero menor uso de CPU
+      * Rango efectivo: 0.05 - 0.5 segundos
+"""
+
 # Archivo de configuración
 CONFIG_FILE = "./config.json"
 
 class SettingsWindow(QWidget):
+    """
+    Ventana de configuración para CatNipy.
+    
+    Arquitectura técnica:
+        - Hereda de QWidget para crear una ventana personalizada
+        - Implementa interfaz gráfica con imágenes personalizadas
+        - Utiliza QPainter para renderizado personalizado
+        - Controles deslizantes interactivos para ajustar parámetros
+        - Persistencia de configuración mediante archivos JSON
+    
+    Componentes principales:
+        - Controles deslizantes para volumen y sensibilidad del mouse
+        - Sistema de arrastre personalizado para controles y ventana
+        - Guardado automático de configuración al cerrar
+        - Visualización numérica de los valores actuales
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -34,6 +72,28 @@ class SettingsWindow(QWidget):
         self.init_ui()
         
     def init_ui(self):
+        """
+        Inicializa la interfaz de usuario de la ventana de configuración
+        
+        Detalles técnicos:
+            1. Configuración de ventana:
+               - FramelessWindowHint: Elimina bordes estándar del sistema
+               - WindowStaysOnTopHint: Mantiene ventana siempre visible
+               - TranslucentBackground: Permite transparencia y formas personalizadas
+               
+            2. Carga de recursos gráficos:
+               - Imágenes para fondo, botón de salida y selectores
+               - Verificación de carga correcta y mensajes de diagnóstico
+               
+            3. Configuración de controles:
+               - Botón de salida con estilo CSS personalizado
+               - Posicionamiento preciso de barras de configuración
+               - Cálculo inicial de posiciones de selectores basado en valores actuales
+               
+            4. Sistema de interacción:
+               - Variables para seguimiento de arrastre de controles
+               - Centrado automático en pantalla
+        """
         self.setWindowTitle("CatNipy Settings")
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -71,10 +131,10 @@ class SettingsWindow(QWidget):
         exit_height = int(self.exit_pixmap.height() *.90)
         self.exit_button.setIconSize(QPixmap(self.exit_pixmap).scaled(exit_width, exit_height).size())
         
-        # Posicionar el botón en la parte inferior central
+        # Posicionar el botón en la parte inferior central, pero un poco más arriba
         self.exit_button.setGeometry(
             (self.width() - exit_width) // 2,  # Centrado horizontalmente
-            self.height() - exit_height, 
+            self.height() - exit_height - 20,  # 30 píxeles más arriba 
             exit_width,
             exit_height
         )
@@ -98,8 +158,8 @@ class SettingsWindow(QWidget):
         self.bar_height = 20
         
         # Posición Y de cada barra (ajustar según el diseño)
-        self.mic_bar_y = 145
-        self.mouse_bar_y = 220  # Posición más alta para el selector de mouse
+        self.mic_bar_y = 125
+        self.mouse_bar_y = 200  # Posición más alta para el selector de mouse
         
         # Posición X común para ambas barras
         self.bar_x = (self.width() - self.bar_width) // 2
@@ -125,7 +185,18 @@ class SettingsWindow(QWidget):
         )
     
     def load_config(self):
-        """Carga la configuración desde un archivo o usa los valores predeterminados"""
+        """
+        Carga la configuración desde un archivo o usa los valores predeterminados
+        
+        Implementación técnica:
+            1. Intenta abrir y leer el archivo JSON de configuración
+            2. Verifica que todas las claves necesarias estén presentes
+            3. Aplica valores predeterminados para claves faltantes
+            4. Manejo de excepciones para fallas de archivo o formato
+            
+        Retorna:
+            dict: Diccionario con la configuración completa y válida
+        """
         try:
             if os.path.exists(CONFIG_FILE):
                 with open(CONFIG_FILE, 'r') as f:
@@ -158,17 +229,73 @@ class SettingsWindow(QWidget):
             self.close()
     
     def value_to_position(self, value, min_value, max_value):
-        """Convierte un valor en una posición X para el selector"""
+        """
+        Convierte un valor en una posición X para el selector
+        
+        Algoritmo de conversión:
+            1. Calcula la proporción normalizada del valor en su rango:
+               ratio = (value - min_value) / (max_value - min_value)
+            2. Interpola linealmente esta proporción al rango de pixeles de la barra:
+               position = bar_x + ratio * bar_width
+            
+        Parámetros:
+            value (float): Valor actual del parámetro
+            min_value (float): Valor mínimo del rango
+            max_value (float): Valor máximo del rango
+            
+        Retorna:
+            int: Posición X en píxeles para el selector
+        """
         ratio = (value - min_value) / (max_value - min_value)
         return int(self.bar_x + ratio * self.bar_width)
     
     def position_to_value(self, position, min_value, max_value):
-        """Convierte una posición X en un valor"""
+        """
+        Convierte una posición X en un valor
+        
+        Algoritmo de conversión:
+            1. Calcula la proporción normalizada de la posición en la barra:
+               ratio = (position - bar_x) / bar_width
+            2. Limita el ratio al rango [0,1] para evitar valores fuera de rango
+            3. Interpola linealmente esta proporción al rango de valores:
+               value = min_value + ratio * (max_value - min_value)
+            
+        Parámetros:
+            position (int): Posición X en píxeles
+            min_value (float): Valor mínimo del rango
+            max_value (float): Valor máximo del rango
+            
+        Retorna:
+            float: Valor calculado según la posición
+        """
         ratio = max(0, min(1, (position - self.bar_x) / self.bar_width))
         return min_value + ratio * (max_value - min_value)
     
     def paintEvent(self, event):
-        """Dibuja el fondo y los elementos de la interfaz"""
+        """
+        Dibuja el fondo y los elementos de la interfaz
+        
+        Detalles técnicos de renderizado:
+            Utiliza QPainter para dibujar los elementos visuales en cada frame:
+            
+            1. Fondo: Imagen completa como base visual
+            
+            2. Selectores: Controles deslizantes posicionados según valores actuales
+               - Centrados vertical y horizontalmente en su posición calculada
+               - Posicionamiento preciso mediante cálculo de offsets
+            
+            3. Valores numéricos: Representación textual de los valores actuales
+               - Formateo específico para cada tipo de valor (3 y 1 decimales)
+               - Posicionados a la derecha de cada barra
+            
+            4. Etiquetas: Textos descriptivos para cada parámetro
+               - Posicionados a la izquierda de cada barra
+               
+        Este método es llamado automáticamente por Qt cuando:
+        - La ventana es mostrada por primera vez
+        - La ventana es redimensionada
+        - Se llama explícitamente a self.update() o self.repaint()
+        """
         painter = QPainter(self)
         
         # Dibujar fondo
@@ -220,7 +347,30 @@ class SettingsWindow(QWidget):
         )
     
     def mousePressEvent(self, event):
-        """Maneja el evento de presionar el mouse"""
+        """
+        Maneja el evento de presionar el mouse
+        
+        Detalles técnicos:
+            Implementa un sistema de detección y manejo de interacciones
+            que determina qué elemento está siendo interactuado:
+            
+            1. Detección de área de interacción:
+               - Crea rectángulos virtuales (QRect) alrededor de cada selector
+               - Verifica si la posición del clic está dentro de estos rectángulos
+               
+            2. Modos de interacción:
+               - 'mic': Arrastrando el selector de micrófono
+               - 'mouse': Arrastrando el selector de sensibilidad del mouse
+               - 'window': Arrastrando la ventana completa
+               
+            3. Interacción directa con barras:
+               - Permite clic directo en cualquier punto de la barra
+               - Mueve inmediatamente el selector a esa posición
+               - Actualiza el valor correspondiente
+               
+            El offset de arrastre permite mantener la posición relativa
+            del cursor dentro del selector durante todo el arrastre.
+        """
         if event.button() == Qt.LeftButton:
             # Verificar si el clic está en el área del selector de micrófono
             mic_rect = QRect(
@@ -264,7 +414,27 @@ class SettingsWindow(QWidget):
                     self.update_mouse_value()
     
     def mouseMoveEvent(self, event):
-        """Maneja el evento de mover el mouse"""
+        """
+        Maneja el evento de mover el mouse
+        
+        Implementación técnica:
+            Procesa el movimiento según el modo de interacción activo:
+            
+            1. Modo 'mic': Actualización del selector de micrófono
+               - Calcula nueva posición basada en movimiento + offset
+               - Restringe posición al rango válido de la barra (clamp)
+               - Actualiza valor de configuración correspondiente
+               
+            2. Modo 'mouse': Actualización del selector de sensibilidad
+               - Similar al selector de micrófono, pero para el otro parámetro
+               
+            3. Modo 'window': Arrastre de ventana completa
+               - Utiliza posición global del cursor y offset inicial
+               - Implementa movimiento suave de la ventana sin bordes
+               
+            Cada modo mantiene su propio estado (self.dragging) y
+            se actualiza la UI llamando a self.update() cuando es necesario.
+        """
         if self.dragging == 'mic':
             # Actualizar posición del selector de micrófono
             new_pos = event.pos().x() - self.dragging_offset
@@ -319,7 +489,29 @@ class SettingsWindow(QWidget):
         self.raise_()
 
 def open_settings():
-    """Abre la ventana de configuración"""
+    """
+    Abre la ventana de configuración
+    
+    Implementación técnica:
+        1. Obtiene o crea una instancia de QApplication:
+           - Reutiliza la instancia existente si está disponible
+           - Crea una nueva instancia si es necesario
+           
+        2. Inicializa la ventana de configuración (SettingsWindow)
+        
+        3. Garantiza visibilidad y foco:
+           - show(): Hace visible la ventana
+           - activateWindow(): Da foco y activa la ventana
+           - raise_(): Trae la ventana al frente
+           
+        4. No ejecuta un nuevo ciclo de eventos (app.exec_()):
+           - Asume que ya hay un ciclo de eventos en ejecución
+           - Permite que la ventana sea modal sin bloquear la aplicación principal
+           
+    Retorna:
+        SettingsWindow: Referencia a la ventana creada para que el
+                        llamador pueda mantener un seguimiento
+    """
     app = QApplication.instance()
     if not app:  # Si no hay una instancia de QApplication, crear una
         app = QApplication(sys.argv)

@@ -42,6 +42,18 @@ check_file_exists(CAT_TALKING)
 samplerate = 44100  # Frecuencia de muestreo (Hz)
 chunk_size = 1024   # Tamaño del bloque de datos
 
+"""
+Configuración técnica del sistema de audio:
+    samplerate (int): Frecuencia de muestreo en Hz (44.1 KHz, calidad CD)
+    chunk_size (int): Tamaño del buffer de audio por bloque
+                      Valor óptimo para equilibrar latencia y rendimiento
+                      - Valores bajos: menor latencia pero más carga de CPU
+                      - Valores altos: mayor latencia pero menos procesamiento
+
+El sistema utiliza sounddevice para procesar audio en tiempo real
+y detectar cuando el usuario está hablando mediante análisis RMS.
+"""
+
 # Cargar configuración o usar valores por defecto
 def cargar_configuracion():
     try:
@@ -62,6 +74,21 @@ volumen_umbral = config.get("volumen_umbral", 0.005)  # Valor más bajo = más s
 mouse_sensibilidad = config.get("mouse_sensibilidad", 0.1)  # Sensibilidad del mouse
 
 class CatNipy(QWidget):
+    """
+    Clase principal que implementa el personaje virtual interactivo.
+    
+    Arquitectura técnica:
+        - Hereda de QWidget para crear una ventana personalizada sin bordes
+        - Utiliza un sistema de capas (QLabels) para componer animaciones modulares
+        - Implementa monitores globales de teclado/ratón/audio para detectar actividad
+        - Gestiona estados múltiples con transiciones visuales
+    
+    Componentes principales:
+        - Sistema de UI: Ventana transparente con múltiples capas visuales
+        - Sistema de audio: Monitoreo en tiempo real del micrófono
+        - Sistema de eventos: Captura global de teclado y mouse
+        - Sistema de estados: Gestión de animaciones y comportamientos
+    """
     def __init__(self):
         super().__init__()
         self.dragging = False
@@ -77,6 +104,22 @@ class CatNipy(QWidget):
         self.init_audio()
 
     def init_ui(self):
+        """
+        Inicializa la interfaz de usuario del personaje.
+        
+        Componentes técnicos:
+            - Ventana sin bordes (FramelessWindowHint)
+            - Fondo transparente (TranslucentBackground)
+            - Sistema de capas para composición de animaciones:
+                * base_label: Imagen de fondo del personaje
+                * keyboard_label: Capa de animación de teclado
+                * mouse_label: Capa de animación de ratón
+                * overlay_label: Capa de animación de boca/habla
+            
+            - Posicionamiento preciso de cada capa para alineación visual
+            - Botón de configuración oculto con estilo CSS personalizado
+            - Sistema de delegación de eventos para manejar interacciones en todas las capas
+        """
         self.setWindowTitle("CatNipy")
         self.setGeometry(1620, 750, 20, 20)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)  # Ventana sin bordes y siempre encima
@@ -291,7 +334,21 @@ class CatNipy(QWidget):
     def update_keyboard_state(self, estado):
         """
         Actualiza el estado del teclado independientemente del estado del mouse.
-        Estados: "keyboard_idle", "typing_handdown", "typing_handup"
+        
+        Parámetros técnicos:
+            estado (str): Determina el estado visual y comportamiento del teclado
+                - "keyboard_idle": Muestra imagen estática de teclado en reposo
+                - "typing_handdown": Animación de presionar tecla
+                - "typing_handup": Animación de soltar tecla
+                - "idle": Oculta completamente la capa del teclado
+        
+        Implementación:
+            1. Actualiza el QLabel correspondiente con la imagen apropiada
+            2. Establece el flag is_typing para seguimiento interno
+            3. Preserva el estado de habla si está activo
+            
+        Este método utiliza un sistema de capas independientes que permite
+        combinar diferentes estados de teclado, mouse y habla simultáneamente.
         """
         print(f"Cambiando estado de teclado a: {estado}")
         
@@ -320,6 +377,17 @@ class CatNipy(QWidget):
         """
         Actualiza el estado del mouse independientemente del estado del teclado.
         Estados: "mouse_idle", "mouse_move"
+        
+        Parámetros técnicos:
+            estado (str): Determina el estado visual y comportamiento del mouse
+                - "mouse_idle": Muestra imagen estática del mouse en reposo
+                - "mouse_move": Muestra imagen de mouse en movimiento
+                - "idle": Oculta completamente la capa del mouse
+        
+        Funcionamiento:
+            1. Actualiza el QLabel correspondiente con la imagen apropiada
+            2. Establece el flag is_moving_mouse para seguimiento interno
+            3. Conserva el estado de habla si está activo
         """
         print(f"Cambiando estado de mouse a: {estado}")
         
@@ -333,7 +401,7 @@ class CatNipy(QWidget):
             self.is_moving_mouse = True
             
         elif estado == "idle":
-            self.mouse_label.setPixmap(QPixmap())  # Ocultar mouse
+            self.mouse_label.setPixmap(QPixmap())  # Ocultar mouse usando un pixmap vacío
             self.is_moving_mouse = False
             
         # Mantener el estado del habla si está activo
@@ -345,6 +413,19 @@ class CatNipy(QWidget):
         Cambia el estado general del gato.
         Este método es mantenido por compatibilidad, pero se prefiere usar
         update_keyboard_state y update_mouse_state por separado.
+        
+        Parámetros técnicos:
+            nuevo_estado (str): Estado general deseado del personaje
+                - "idle": Estado neutral, sin interacciones
+                - "keyboard_idle": Teclado en reposo
+                - "mouse_idle": Mouse en reposo
+                - "typing_handdown"/"typing_handup": Animaciones de escritura
+                - "mouse_move": Animación de movimiento del mouse
+                
+        Funcionamiento:
+            1. Actualiza el estado interno del personaje
+            2. Delega a métodos específicos para actualizar cada capa visual
+            3. Preserva estados de superposición (como hablar)
         """
         print(f"Cambiando estado general: {self.estado_actual} -> {nuevo_estado}")
         
@@ -374,6 +455,21 @@ class CatNipy(QWidget):
             self.overlay_label.show()
 
     def init_audio(self):
+        """
+        Inicializa el sistema de captura y procesamiento de audio.
+        
+        Detalles técnicos:
+            - Utiliza sounddevice (sd) para captura de audio en tiempo real
+            - Configura un stream de entrada con callback asíncrono
+            - Implementa manejo de errores con intento alternativo de configuración
+            - Parámetros optimizados:
+                * samplerate: 44100Hz (calidad CD)
+                * blocksize: 1024 muestras (equilibrio entre latencia y rendimiento)
+            
+            El callback procesa cada bloque de audio para detectar actividad
+            vocal mediante análisis RMS (Root Mean Square) comparado con un
+            umbral configurable por el usuario.
+        """
         # Inicializar stream de audio
         try:
             self.stream = sd.InputStream(
@@ -401,6 +497,25 @@ class CatNipy(QWidget):
                 print("No se pudo iniciar el sistema de audio")
         
     def audio_callback(self, indata, frames, time, status):
+        """
+        Callback para procesar cada bloque de audio capturado.
+        
+        Parámetros técnicos:
+            indata (numpy.ndarray): Buffer de audio del micrófono
+            frames (int): Número de frames en este bloque
+            time (CData): Información de tiempo de la captura
+            status (CallbackFlags): Flags de estado/error
+        
+        Algoritmo:
+            1. Calcula el valor RMS (Root Mean Square) del bloque de audio
+               RMS = sqrt(mean(x²)) donde x son las muestras de audio
+            2. Compara con el umbral configurable (volumen_umbral)
+            3. Actualiza la UI en el hilo principal mediante QTimer.singleShot
+               para evitar problemas de threading
+        
+        El uso de numpy permite cálculos vectorizados eficientes para
+        el análisis de audio en tiempo real.
+        """
         # Calcula la media cuadrática (RMS) del bloque de audio
         volumen = np.sqrt(np.mean(indata**2))
         
@@ -425,7 +540,25 @@ class CatNipy(QWidget):
         print("Hablando detectado - overlay visible")
         
     def setup_signals(self):
-        """Configura las conexiones de señales para eventos globales"""
+        """
+        Configura las conexiones de señales para eventos globales
+        
+        Arquitectura de señales:
+            Implementa un patrón de comunicación entre hilos usando Qt Signals.
+            Las señales son emitidas por los listeners globales (en hilos separados)
+            y conectadas a slots en el hilo principal de la UI para:
+            
+            1. Garantizar thread-safety en la actualización de la UI
+            2. Desacoplar la captura de eventos de su procesamiento
+            3. Mantener responsabilidad única en cada componente
+            
+            Conexiones:
+            - keyPressSignal → update_keyboard_state("typing_handdown")
+            - keyReleaseSignal → handle_key_release() con temporizador
+            - mouseClickPressSignal → update_mouse_state("mouse_move")
+            - mouseClickReleaseSignal → update_mouse_state("mouse_idle")
+            - mouseMoveSignal → handle_mouse_move() con temporizador
+        """
         # Conectar señales a manejadores en el hilo principal
         self.signals.keyPressSignal.connect(lambda: self.update_keyboard_state("typing_handdown"))
         self.signals.keyReleaseSignal.connect(lambda: self.handle_key_release())
@@ -448,7 +581,18 @@ class CatNipy(QWidget):
             QTimer.singleShot(300, lambda: self.update_mouse_state("mouse_idle"))
     
     def open_settings_window(self):
-        """Abre la ventana de configuración"""
+        """
+        Abre la ventana de configuración
+        
+        Implementación técnica:
+            1. Reutiliza una instancia existente si ya se creó anteriormente
+            2. Crea una nueva instancia de SettingsWindow desde el módulo settings
+            3. Programa una recarga de configuración asíncrona mediante QTimer
+            
+            La recarga asíncrona permite que los cambios en la configuración
+            se apliquen correctamente después de cerrar la ventana de configuración,
+            evitando condiciones de carrera entre el guardado y la recarga.
+        """
         print("Abriendo ventana de configuración...")
         # Guardar una referencia para evitar que se destruya
         if hasattr(self, 'settings_window') and self.settings_window:
@@ -489,7 +633,20 @@ class CatNipy(QWidget):
         self.raise_()
         
     def reload_config(self):
-        """Recarga la configuración desde el archivo"""
+        """
+        Recarga la configuración desde el archivo
+        
+        Detalles técnicos:
+            1. Actualiza variables globales para parámetros configurables:
+               - volumen_umbral: Sensibilidad de detección de audio
+               - mouse_sensibilidad: Frecuencia de respuesta a movimientos
+               
+            2. Reinicia el temporizador del mouse para aplicar nueva sensibilidad
+            
+            Utiliza palabra clave 'global' para modificar variables de ámbito global
+            definidas fuera de esta clase. Esto permite que los callbacks de audio
+            y mouse accedan a los valores actualizados.
+        """
         global volumen_umbral, mouse_sensibilidad
         config = cargar_configuracion()
         volumen_umbral = config.get("volumen_umbral", 0.005)
@@ -505,7 +662,23 @@ class CatNipy(QWidget):
     def init_global_monitors(self):
         """
         Inicializa monitores globales para eventos de teclado y mouse.
-        Estos funcionarán incluso cuando la ventana no tenga el foco.
+        
+        Arquitectura técnica:
+            Utiliza la biblioteca 'pynput' para monitorear eventos de entrada
+            globales a nivel del sistema operativo. Esto permite detectar
+            actividad incluso cuando la aplicación no tiene el foco.
+            
+            Componentes:
+            1. keyboard.Listener: Captura eventos de teclado globales
+               - on_press: Llamado cuando se presiona cualquier tecla
+               - on_release: Llamado cuando se suelta cualquier tecla
+               
+            2. mouse.Listener: Captura eventos de mouse globales
+               - on_move: Llamado cuando se mueve el cursor
+               - on_click: Llamado cuando se hace clic con cualquier botón
+            
+            Los callbacks emiten señales Qt para procesamiento thread-safe
+            en el hilo principal de la UI.
         """
         # Inicializar monitor de teclado global
         self.keyboard_listener = keyboard.Listener(
@@ -534,7 +707,25 @@ class CatNipy(QWidget):
         return True  # Permitir que el evento se propague
     
     def on_global_mouse_move(self, x, y):
-        """Manejador para eventos globales de movimiento del mouse"""
+        """
+        Manejador para eventos globales de movimiento del mouse
+        
+        Parámetros técnicos:
+            x, y (int): Coordenadas absolutas del cursor en la pantalla
+            
+        Algoritmo de limitación de frecuencia:
+            Implementa un mecanismo de throttling (limitación de frecuencia)
+            para reducir la cantidad de actualizaciones de la UI:
+            
+            1. Registra timestamp del movimiento actual
+            2. Compara con el timestamp del último movimiento procesado
+            3. Solo procesa si ha pasado suficiente tiempo (configurable)
+            
+            Este enfoque reduce significativamente la carga de CPU y
+            proporciona animaciones más suaves con múltiples movimientos.
+            
+        Nota: No se procesan movimientos durante arrastre del personaje.
+        """
         # Solo actualizar el estado si no estamos arrastrando
         if self.dragging:
             return True  # No hacer nada especial durante el arrastre de la ventana

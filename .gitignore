@@ -205,6 +205,7 @@ $RECYCLE.BIN/
 # *.mp4
 # *.wav
 # *.avi
+
 brain_docker.py
 
 # Logs específicos del proyecto
