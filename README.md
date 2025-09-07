@@ -4,7 +4,6 @@
 
 <img width="400" height="400" alt="cat_idle" src="https://github.com/user-attachments/assets/50385f68-33d8-4353-b5b5-b99f11282e08" />
 
-## Transforming Interaction into Engaging Digital Experiences
 
 <hr>
 </div>
