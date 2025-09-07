@@ -1,15 +1,39 @@
-# CatNipy | Mascota Virtual
+# CATNIPY
 
 <img width="500" height="500" alt="cat_idle" src="https://github.com/user-attachments/assets/50385f68-33d8-4353-b5b5-b99f11282e08" />
-<br>
 
-Trabajo en conjunto con [Madnux](https://github.com/mad2ux)
+Transforming Interaction into Engaging Digital Experiences
 
-<br>
+[![GitHub Actions](https://img.shields.io/badge/GitHub-Actions-blue)](https://github.com/GabyPng/catnipy)
+[![Python](https://img.shields.io/badge/python-3.6+-blue)](https://www.python.org/downloads/)
+[![PyQt5](https://img.shields.io/badge/PyQt5-5.15-blue)](https://pypi.org/project/PyQt5/)
 
-## Descripción detallada
+Built with the tools and technologies:
+
+[![PyQt5](https://img.shields.io/badge/-PyQt5-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
+[![NumPy](https://img.shields.io/badge/-NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org/)
+[![Pynput](https://img.shields.io/badge/-Pynput-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://pynput.readthedocs.io/)
+[![Python](https://img.shields.io/badge/-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![GitHub Actions](https://img.shields.io/badge/-GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/features/actions)
+
+## Table of Contents
+
+* [Descripción detallada](#descripción-detallada)
+* [Documentación técnica](#documentación-técnica)
+  * [Inspiración](#inspiración)
+  * [Sounddevice](#sounddevice)
+  * [Pynput](#pynput)
+* [Instalación y Ejecución](#instalación-y-ejecución)
+  * [Dependencias](#dependencias)
+  * [Ejecución](#ejecución)
+  * [Controles](#controles)
+* [Configuración Avanzada](#configuración-avanzada)
+* [Arquitectura del Sistema](#arquitectura-del-sistema)
+* [Exportación a Ejecutable](#exportación-a-ejecutable)
 
 CatNipy es una aplicación de escritorio que muestra una mascota virtual (un gato) que reacciona al sonido del micrófono, movimientos del teclado y del mouse. La aplicación utiliza PyQt5 para la interfaz gráfica, sounddevice para la captura de audio en tiempo real y pynput para capturar eventos globales del sistema.
+
+Trabajo en conjunto con [Madnux](https://github.com/mad2ux)
 
 ---
 <br>
