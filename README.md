@@ -1,24 +1,38 @@
+<div align="center">
+
 # CATNIPY
 
-<img width="500" height="500" alt="cat_idle" src="https://github.com/user-attachments/assets/50385f68-33d8-4353-b5b5-b99f11282e08" />
+<img width="400" height="400" alt="cat_idle" src="https://github.com/user-attachments/assets/50385f68-33d8-4353-b5b5-b99f11282e08" />
 
-Transforming Interaction into Engaging Digital Experiences
+## Transforming Interaction into Engaging Digital Experiences
 
-[![GitHub Actions](https://img.shields.io/badge/GitHub-Actions-blue)](https://github.com/GabyPng/catnipy)
-[![Python](https://img.shields.io/badge/python-3.6+-blue)](https://www.python.org/downloads/)
-[![PyQt5](https://img.shields.io/badge/PyQt5-5.15-blue)](https://pypi.org/project/PyQt5/)
+<hr>
+</div>
 
-Built with the tools and technologies:
+<div align="center">
 
-[![PyQt5](https://img.shields.io/badge/-PyQt5-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
-[![NumPy](https://img.shields.io/badge/-NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org/)
-[![Pynput](https://img.shields.io/badge/-Pynput-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://pynput.readthedocs.io/)
-[![Python](https://img.shields.io/badge/-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![GitHub Actions](https://img.shields.io/badge/-GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/features/actions)
+[![GitHub Actions](https://img.shields.io/badge/GitHub-Actions-2088FF?style=flat-square)](https://github.com/GabyPng/catnipy)
+[![Python](https://img.shields.io/badge/python-3.6+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![PyQt5](https://img.shields.io/badge/PyQt5-5.15-41CD52?style=flat-square&logo=qt&logoColor=white)](https://pypi.org/project/PyQt5/)
+
+### Built with the tools and technologies:
+
+<div style="margin: 20px 0;">
+  <a href="https://doc.qt.io/qtforpython/" style="margin: 0 10px;"><img src="https://img.shields.io/badge/-PyQt5-41CD52?style=for-the-badge&logo=qt&logoColor=white" alt="PyQt5"></a>
+  <a href="https://numpy.org/" style="margin: 0 10px;"><img src="https://img.shields.io/badge/-NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white" alt="NumPy"></a>
+  <a href="https://pynput.readthedocs.io/" style="margin: 0 10px;"><img src="https://img.shields.io/badge/-Pynput-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Pynput"></a>
+  <a href="https://www.python.org/" style="margin: 0 10px;"><img src="https://img.shields.io/badge/-Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://github.com/features/actions" style="margin: 0 10px;"><img src="https://img.shields.io/badge/-GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" alt="GitHub Actions"></a>
+</div>
+</div>
+
+<div align="center">
 
 ## Table of Contents
 
-* [Descripción detallada](#descripción-detallada)
+</div>
+
+* [Descripción](#descripción)
 * [Documentación técnica](#documentación-técnica)
   * [Inspiración](#inspiración)
   * [Sounddevice](#sounddevice)
@@ -30,6 +44,8 @@ Built with the tools and technologies:
 * [Configuración Avanzada](#configuración-avanzada)
 * [Arquitectura del Sistema](#arquitectura-del-sistema)
 * [Exportación a Ejecutable](#exportación-a-ejecutable)
+
+## Descripción
 
 CatNipy es una aplicación de escritorio que muestra una mascota virtual (un gato) que reacciona al sonido del micrófono, movimientos del teclado y del mouse. La aplicación utiliza PyQt5 para la interfaz gráfica, sounddevice para la captura de audio en tiempo real y pynput para capturar eventos globales del sistema.
 
