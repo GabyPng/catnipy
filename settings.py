@@ -5,10 +5,13 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel
 from PyQt5.QtGui import QPixmap, QPainter, QCursor, QIcon
 from PyQt5.QtCore import Qt, QPoint, QRect
 
-# Rutas de imágenes
-SETTINGS_BG = "./assets/gui/catnipy_gui__settings.png"
-SETTINGS_EXIT = "./assets/gui/catnipy_gui__settings_exit.png"
-SETTINGS_SELECTOR = "./assets/gui/catnipy_gui__settings_selector.png"
+# Obtener la ruta del directorio donde se encuentra el script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Rutas de imágenes (ahora con rutas absolutas)
+SETTINGS_BG = os.path.join(script_dir, "assets/gui/catnipy_gui__settings.png")
+SETTINGS_EXIT = os.path.join(script_dir, "assets/gui/catnipy_gui__settings_exit.png")
+SETTINGS_SELECTOR = os.path.join(script_dir, "assets/gui/catnipy_gui__settings_selector.png")
 
 """
 Constantes técnicas para la interfaz de configuración:
@@ -39,7 +42,7 @@ Parámetros de configuración por defecto:
 """
 
 # Archivo de configuración
-CONFIG_FILE = "./config.json"
+CONFIG_FILE = os.path.join(script_dir, "config.json")
 
 class SettingsWindow(QWidget):
     """

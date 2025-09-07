@@ -10,14 +10,17 @@ import json
 from pynput import keyboard, mouse
 from settings import open_settings, CONFIG_FILE, DEFAULT_CONFIG
 
-# Rutas de imágenes
-CAT_IDLE = "./assets/motions/cat_idle.png"
-CAT_KEYBOARD_IDLE = "./assets/motions/cat_keyboard_idle.png"
-CAT_MOUSE_IDLE = "./assets/motions/cat_mouse_idle.png"
-CAT_TYPING_HANDUP = "./assets/motions/cat_typing_handup.png"
-CAT_TYPING_HANDDOWN = "./assets/motions/cat_typing_handdown.png"
-CAT_MOUSE_MOVE = "./assets/motions/cat_mouse_move.png"
-CAT_TALKING = "./assets/motions/cat_onlytalking__nomic.png"
+# Obtener la ruta del directorio donde se encuentra el script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Rutas de imágenes (ahora con rutas absolutas)
+CAT_IDLE = os.path.join(script_dir, "assets/motions/cat_idle.png")
+CAT_KEYBOARD_IDLE = os.path.join(script_dir, "assets/motions/cat_keyboard_idle.png")
+CAT_MOUSE_IDLE = os.path.join(script_dir, "assets/motions/cat_mouse_idle.png")
+CAT_TYPING_HANDUP = os.path.join(script_dir, "assets/motions/cat_typing_handup.png")
+CAT_TYPING_HANDDOWN = os.path.join(script_dir, "assets/motions/cat_typing_handdown.png")
+CAT_MOUSE_MOVE = os.path.join(script_dir, "assets/motions/cat_mouse_move.png")
+CAT_TALKING = os.path.join(script_dir, "assets/motions/cat_onlytalking__nomic.png")
 
 # Verificar que los archivos existen
 def check_file_exists(filepath):
