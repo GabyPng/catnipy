@@ -1,12 +1,14 @@
 import sounddevice as sd
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject
 import numpy as np
 import sys
 import os
 import time
+import json
 from pynput import keyboard, mouse
+from settings import open_settings, CONFIG_FILE, DEFAULT_CONFIG
 
 # Rutas de imágenes
 CAT_IDLE = "./assets/motions/cat_idle.png"
@@ -36,28 +38,28 @@ check_file_exists(CAT_TYPING_HANDDOWN)
 check_file_exists(CAT_MOUSE_MOVE)
 check_file_exists(CAT_TALKING)
 
-# Parámetros para la captura de audioe as sd
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QTimer, Qt
-import numpy as np
-import sys
-
-# Rutas de imágenes
-CAT_IDLE = "./assets/motions/cat_idle.png"
-CAT_KEYBOARD_IDLE = "./assets/motions/cat_keyboard_idle.png"
-CAT_MOUSE_IDLE = "./assets/motions/cat_mouse_idle.png"
-CAT_TYPING_HANDUP = "./assets/motions/cat_typing_handup.png"
-CAT_TYPING_HANDDOWN = "./assets/motions/cat_typing_handdown.png"
-CAT_MOUSE_MOVE = "./assets/motions/cat_mouse_move.png"
-CAT_TALKING = "./assets/motions/cat_onlytalking__nomic.png"
-
 # Parámetros para la captura de audio
 samplerate = 44100  # Frecuencia de muestreo (Hz)
 chunk_size = 1024   # Tamaño del bloque de datos
 
-# Umbral de volumen para detectar sonido
-volumen_umbral = 0.005  # Valor más bajo = más sensible
+# Cargar configuración o usar valores por defecto
+def cargar_configuracion():
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r') as f:
+                config = json.load(f)
+                return config
+        else:
+            # Si no existe el archivo, usar valores por defecto
+            return DEFAULT_CONFIG.copy()
+    except Exception as e:
+        print(f"Error al cargar la configuración: {e}")
+        return DEFAULT_CONFIG.copy()
+
+# Obtener configuración
+config = cargar_configuracion()
+volumen_umbral = config.get("volumen_umbral", 0.005)  # Valor más bajo = más sensible
+mouse_sensibilidad = config.get("mouse_sensibilidad", 0.1)  # Sensibilidad del mouse
 
 class CatNipy(QWidget):
     def __init__(self):
@@ -100,6 +102,24 @@ class CatNipy(QWidget):
         
         # Inicializar los monitores globales de eventos de teclado y mouse
         self.init_global_monitors()
+        
+        # Botón de configuración (inicialmente oculto, se muestra al hacer clic derecho)
+        self.settings_button = QPushButton("⚙", self)
+        self.settings_button.setFixedSize(30, 30)
+        self.settings_button.setStyleSheet("""
+            QPushButton { 
+                background-color: rgba(0, 0, 0, 150); 
+                color: white; 
+                border-radius: 15px; 
+                font-size: 16px; 
+            }
+            QPushButton:hover { 
+                background-color: rgba(30, 30, 30, 200); 
+            }
+        """)
+        self.settings_button.move(5, 5)  # Posición en la esquina superior izquierda
+        self.settings_button.clicked.connect(self.open_settings_window)
+        self.settings_button.hide()  # Inicialmente oculto
         
         
         # Cargar todas las imágenes
@@ -190,6 +210,9 @@ class CatNipy(QWidget):
         if event.button() == Qt.LeftButton:
             # Delegar al método del widget principal
             self.mousePressEvent(event)
+        elif event.button() == Qt.RightButton:
+            # Delegar al método del widget principal para el clic derecho
+            self.mousePressEvent(event)
             
     def label_mouse_move(self, event):
         # Delegar el movimiento al widget principal
@@ -214,6 +237,11 @@ class CatNipy(QWidget):
             self.dragging = True
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
             self.update_mouse_state("mouse_move")
+            event.accept()
+        elif event.button() == Qt.RightButton:
+            # Abrir configuración directamente con clic derecho
+            print("Clic derecho detectado - abriendo configuración")
+            self.open_settings_window()
             event.accept()
             
     def mouseMoveEvent(self, event):
@@ -376,7 +404,7 @@ class CatNipy(QWidget):
         # Calcula la media cuadrática (RMS) del bloque de audio
         volumen = np.sqrt(np.mean(indata**2))
         
-        # Compara el volumen con el umbral
+        # Compara el volumen con el umbral configurable
         if volumen > volumen_umbral:
             print(f"Volumen detectado: {volumen:.4f}")
             # Usar QTimer.singleShot para ejecutar show_sound en el hilo principal de Qt
@@ -418,6 +446,22 @@ class CatNipy(QWidget):
             self.update_mouse_state("mouse_move")
             # Volver al estado mouse_idle después de un breve momento
             QTimer.singleShot(300, lambda: self.update_mouse_state("mouse_idle"))
+    
+    def open_settings_window(self):
+        """Abre la ventana de configuración"""
+        print("Abriendo ventana de configuración...")
+        # Guardar una referencia para evitar que se destruya
+        if hasattr(self, 'settings_window') and self.settings_window:
+            # Si ya existe una ventana, mostrarla de nuevo
+            self.settings_window.show()
+            self.settings_window.activateWindow()
+            self.settings_window.raise_()
+        else:
+            # Crear una nueva ventana
+            self.settings_window = open_settings()
+        
+        # Programar una recarga de la configuración después de cerrar la ventana
+        QTimer.singleShot(500, self.reload_config)
         
     def close_app(self, event):
         self.stream.stop()
@@ -443,6 +487,15 @@ class CatNipy(QWidget):
         super().activateWindow()
         self.setWindowState(self.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
         self.raise_()
+        
+    def reload_config(self):
+        """Recarga la configuración desde el archivo"""
+        global volumen_umbral, mouse_sensibilidad
+        config = cargar_configuracion()
+        volumen_umbral = config.get("volumen_umbral", 0.005)
+        mouse_sensibilidad = config.get("mouse_sensibilidad", 0.1)
+        self.last_mouse_move_time = time.time() - mouse_sensibilidad  # Actualizar tiempo del mouse
+        print(f"Configuración actualizada: volumen_umbral={volumen_umbral}, mouse_sensibilidad={mouse_sensibilidad}")
         
     def showEvent(self, event):
         # Se llama cuando la ventana se muestra
@@ -488,7 +541,7 @@ class CatNipy(QWidget):
         
         # Limitar la frecuencia de actualización para movimientos del mouse
         current_time = time.time()
-        if current_time - self.last_mouse_move_time > 0.1:  # Limitar a ~10 actualizaciones por segundo
+        if current_time - self.last_mouse_move_time > mouse_sensibilidad:  # Usar sensibilidad configurable
             self.last_mouse_move_time = current_time
             # Emitir señal para manejar en el hilo principal
             self.signals.mouseMoveSignal.emit()
@@ -526,6 +579,11 @@ if __name__ == '__main__':
     # Aplicar ambos estados simultáneamente para probar
     QTimer.singleShot(1000, lambda: cat.update_keyboard_state("keyboard_idle"))
     QTimer.singleShot(1000, lambda: cat.update_mouse_state("mouse_idle"))
+    
+    # Programar una actualización periódica de la configuración
+    config_timer = QTimer()
+    config_timer.timeout.connect(cat.reload_config)
+    config_timer.start(5000)  # Verificar cada 5 segundos por cambios en la configuración
     
     try:
         sys.exit(app.exec_())

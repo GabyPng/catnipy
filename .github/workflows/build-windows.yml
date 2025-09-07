@@ -1,0 +1,97 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+    
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --onefile --noconsole --name catnipy --add-data="assets;assets" brain.py
+    
+    - name: Install NSIS
+      run: |
+        choco install nsis -y
+    
+    - name: Create NSIS Installer Script
+      run: |
+        @"
+        ; Script generado automáticamente para CatNipy
+
+        !include "MUI2.nsh"
+
+        Name "CatNipy"
+        OutFile "CatNipy_Installer.exe"
+
+        InstallDir "$PROGRAMFILES\CatNipy"
+
+        !insertmacro MUI_PAGE_WELCOME
+        !insertmacro MUI_PAGE_DIRECTORY
+        !insertmacro MUI_PAGE_INSTFILES
+        !insertmacro MUI_PAGE_FINISH
+
+        !insertmacro MUI_LANGUAGE "Spanish"
+
+        Section "Instalar CatNipy"
+            SetOutPath "$INSTDIR"
+            File "dist\catnipy.exe"
+            
+            ; Crear acceso directo en el menú de inicio
+            CreateDirectory "$SMPROGRAMS\CatNipy"
+            CreateShortcut "$SMPROGRAMS\CatNipy\CatNipy.lnk" "$INSTDIR\catnipy.exe"
+            CreateShortcut "$DESKTOP\CatNipy.lnk" "$INSTDIR\catnipy.exe"
+            
+            ; Escribir clave de desinstalación
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CatNipy" "DisplayName" "CatNipy"
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CatNipy" "UninstallString" '"$INSTDIR\uninstall.exe"'
+            WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CatNipy" "NoModify" 1
+            WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CatNipy" "NoRepair" 1
+            
+            ; Crear desinstalador
+            WriteUninstaller "$INSTDIR\uninstall.exe"
+        SectionEnd
+
+        Section "Uninstall"
+            Delete "$INSTDIR\catnipy.exe"
+            Delete "$INSTDIR\uninstall.exe"
+            RMDir "$INSTDIR"
+            
+            Delete "$SMPROGRAMS\CatNipy\CatNipy.lnk"
+            RMDir "$SMPROGRAMS\CatNipy"
+            Delete "$DESKTOP\CatNipy.lnk"
+            
+            DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CatNipy"
+        SectionEnd
+        "@ | Out-File -Encoding utf8 installer.nsi
+    
+    - name: Build NSIS Installer
+      run: |
+        & 'C:\Program Files (x86)\NSIS\makensis.exe' installer.nsi
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-installer
+        path: |
+          dist/catnipy.exe
+          CatNipy_Installer.exe

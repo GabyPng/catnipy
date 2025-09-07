@@ -337,17 +337,54 @@ catnipy/
 
 ---
 
-## Exportación
+## Exportación a Ejecutable
 
-```python
-pip install pyinstaller
-❯ pyinstaller --onefile --noconsole --add-data "assets:assets" brain.py
+### Método rápido (recomendado)
+Usa el script multiplataforma incluido:
+```bash
+python create_executable.py
 ```
+o
+```bash
+./create_executable.py  # En Linux/macOS
+```
+
+### Método manual
+
+#### Instalación de PyInstaller
+```bash
+pip install pyinstaller
+```
+
+#### Para Linux
+```bash
+pyinstaller --onefile --noconsole --name catnipy --add-data "assets:assets" brain.py
+```
+
+#### Para Windows
+```bash
+pyinstaller --onefile --noconsole --name catnipy --add-data "assets;assets" brain.py
+```
+
+> **Nota importante**: Observa la diferencia en el separador de `--add-data`: en Linux se usa `:` (dos puntos) mientras que en Windows se usa `;` (punto y coma).
+
+### Ubicación del ejecutable
+El archivo ejecutable se creará en la carpeta `dist/` dentro del directorio de tu proyecto.
+
+### Compatibilidad entre plataformas
+Si estás desarrollando en una plataforma para generar un ejecutable para otra:
+1. Usa el script `create_executable.py` incluido (multiplataforma)
+2. O genera el ejecutable directamente en la plataforma de destino
+
+### Resolución de problemas comunes
+- **Archivos no encontrados**: Asegúrate de que la estructura de `assets/` se mantiene
+- **Problemas de acceso al micrófono**: En Windows puede requerir permisos de administrador
+- **Antivirus**: Algunos antivirus pueden bloquear el ejecutable; añádelo a excepciones
 
 ## Notas Técnicas
 
 - **Thread Model**: Audio callback en thread separado, GUI en main thread
-- **Cross-platform**: Compatible con Windows ?, Linux, macOS ???
-- **Dependencies**: PyQt5, sounddevice, numpy
+- **Cross-platform**: Compatible con Windows ✅, Linux ✅, macOS ⚠️ (no probado)
+- **Dependencies**: PyQt5, sounddevice, numpy, pynput
 - **Python Version**: 3.6+
 # catnipy
